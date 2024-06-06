@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %} <!--이 놈이 있어야 get_media_prefix를 사용할 수 있었음 MEDIA ROOT,URL 설정한거를 쓸 수 있게 해주는 듯-->
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <!-- Google Icon -->
+  <!-- 요기에 구글 머티리얼 아이콘 -->
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Symbols+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+
+    
+    <!--jQuery 스크립트 -->
+    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
+    
+    
+    <title>Hello, world!</title>
+
+    <style>
+        .box {
+            width: 150px;
+            height: 150px;
+            border-radius: 70%;
+            overflow: hidden;
+        }
+
+        .profile {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .feed_box {
+            margin: 20px 0;
+            border: solid 1px gray;
+            background-color: white;
+        }
+        .modal_overlay {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(1.5px);
+        -webkit-backdrop-filter: blur(1.5px);
+        z-index: 1000;    
+    }
+
+    .modal_window {
+        background: white;
+        backdrop-filter: blur(13.5px);
+        -webkit-backdrop-filter: blur(13.5px);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        width: 800px;
+        height: 600px;
+        position: relative;
+        padding: 10px;
+    }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="position: fixed; width: 100%; z-index: 999">
+    <div class="container-fluid" style="justify-content: space-between; flex-wrap :nowrap; min-width: 1000px">
+        <a class="navbar-brand" href="/main"><img style="width: 100px"
+                                              src="http://www.instagram.com/static/images/web/mobile_nav_type_logo-2x.png/1b47f9d0e595.png"></a>
+
+        <input class="form-control me-2" style="width: 400px" type="search" placeholder="Search" aria-label="Search">
+        <div style="display: flex">
+            <a href="/main" style="color: black"><span class="material-icons" style="padding-right: 10px;">home</span></a>
+            <span id="nav_bar_add_box" class="material-icons-outlined" style="padding-right: 10px">add_box</span>
+            <!--
+            <span class="material-icons-outlined">send</span>
+            <span class="material-icons-outlined">explore</span>
+            <span class="material-icons-outlined">favorite</span>-->
+
+            <div class="dropdown">
+                <a href="#" role="button" id="dropdownMenuLink"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="box" style="width: 25px; height: 25px">
+
+                        <img class="profile"
+                             src="{% get_media_prefix %}{{ user.profile_image }}">
+
+
+                    </div>
+                </a>
+
+                <ul class="dropdown-menu" style="left: -158px" aria-labelledby="dropdownMenuLink">
+                    <li><a class="dropdown-item" href="/content/profile">프로필</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/user/logout">로그아웃</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<div style="display:flex; flex-direction: row; text-align: center; justify-content: center; padding-top: 60px; background-color: #FAFAFA">
+    <div style="width: 500px; min-width:500px;height: 1000px; margin-right: 300px">
+
+        <!--여기서부터 피드박스 -->
+        {% for feed in feed_list %}
+            <div class="feed_box">
+
+                <div style="display: flex;flex-direction: row; align-items: center; margin:0 20px">
+                    <div class="box" style="width: 35px; height: 35px">
+                        <img class="profile"
+                             src="{% get_media_prefix %}{{ feed.profile_image }}">
+                    </div>
+                    <div>
+                        {{ feed.nickname }}
+                    </div>
+                </div>
+                <div>
+                    <img style="width: 100%"
+                         src="{% get_media_prefix %}{{ feed.image }}">
+                </div>
+                <div style="margin:0 20px;display: flex; flex-direction: row; justify-content: space-between">
+                    <div>
+                        <span id="favorite_{{ feed.id }}" feed_id="{{ feed.id }}" class="favorite material-icons-outlined" style="color: red; cursor: pointer">{% if feed.is_liked %}
+                            favorite{% else %}favorite_border{% endif %}</span>
+                    </div>
+                    <div>
+                        <span id="bookmark_{{ feed.id }}" feed_id="{{ feed.id }}" class="bookmark material-icons-outlined" style="cursor: pointer;">
+                            {% if feed.is_marked %}
+                            bookmark
+                            {% else %}
+                            bookmark_border
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div style="margin:0 20px;text-align: left; font-size: 14px"> 춘식이 <b>{{ feed.like_count }}명</b>이 좋아합니다.</div>
+                <div style="margin:0 20px;text-align: left; font-size: 16px"><b>{{ feed.nickname }}</b> {{ feed.content }}</div>
+                <div id ="reply_list_{{ feed.id }}">
+                    {% for reply in feed.reply_list %} <!-- feed 안에 reply리스트가 있는데 그걸 하나씩 reply로 꺼내준다 -->
+                        <div style="margin:0 20px;text-align: left; font-size: 14px">
+                            <b>{{ reply.nickname }} </b>{{ reply.reply_content }}</div>
+                    {% endfor %}
+                </div>
+
+
+                <div style="display: flex; flex-direction: row;align-items: center; border-top: solid 1px gray">
+                    <input id="reply_{{ feed.id }}" type="text" class="form-control" style="box-shadow: none; border: none; outline: none" placeholder="댓글 달기..">
+                    <div feed_id="{{ feed.id }}" class="upload_reply" style="width: 50px; color: cornflowerblue; font-weight: bold">
+                        게시
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+<!--여기까지 피드박스 -->
+    </div>
+    <div style="width: 400px; height: 1000px; position: fixed; left: 62%; z-index: 0">
+        <div style="display: flex;flex-direction: row; align-items: center; margin:0 20px">
+                <div class="box" style="width: 65px; height: 65px">
+                    <img class="profile"
+                         src="{% get_media_prefix %}{{ user.profile_image }}">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold">
+                        {{ user.nickname }}
+                    </div>
+                    <div style="color:gray">
+                        {{ user.name }}
+                    </div>
+                </div>
+        </div>
+        <div style="display: flex; flex-direction: row; justify-content: space-between">
+            <div style="font-weight: bold;color: gray">
+                회원님을 위한 추천
+            </div>
+            <div>
+                <a href="#" style="color: black; font-weight: bold;text-decoration: none">모두보기</a>
+            </div>
+        </div>
+        <div style="display: flex;flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display: flex; flex-direction: row">
+                <div class="box" style="width: 35px; height: 35px">
+                    <img class="profile"
+                         src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUSEhAVFhUTGRcVFxcVFhYXFhgSGBIYGRkZFhUaHSggGBolGxUYITEiJSkrLi4uFyEzODMtNygtLisBCgoKDQ0OGw8QGjMhHyErNzAtLTc3NzcrLSs3NysyLTctLS8uLTA3LjAsLjcwKy0tMi0tMy4rNy0tKysrKy01LP/AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABgcEBQEDCAL/xABJEAABAwIEAgcDBwgGCwAAAAABAAIDBBEFEiExBkEHEyJRYXGBMpGhCBQjM0KxwRUWUlRiktHhNUNTctLwRFVjgoOjsrTCw/H/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAnEQEAAgIBAwQBBQEAAAAAAAAAAQIDERIEITETQWFxIyIyUYHBBf/aAAwDAQACEQMRAD8AvFERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQERariDiKloojLUzNY0W8XEm9g1o1N7H3INqiqDEenujb9TSTvIP9ZkjFu8Wc4/BdmGdOEEjCZKKZrgOzlcx7S62xJsQL87FBbaKmpumqS5yULbW0zSEm9xvZu1rrRVnTfXtme5tLF1JtlY7MXAC1/pBa97HlpfwQegkVScO9OdLK9rKqB9OXG2cESRt10znRwG2tj6BWpSVccrGyRPa9jwC1zSC0g7EEboO9ERAREQEREBERAREQEREBERAREQEREBERARFV/Sv0m/MD81pmB1Q5ty4+zEHXtp9p/MDYIOrpC6YIqN5p6MNnmaSHuP1TCBtce28G2g0Go30VGztmqJHTVMrnvebkucS438eQ8F8UNHl7TtSfh/NZqDqipmN2aPv+9dqIoguVwiI6padjvab68/et9wXxlU4TKMrnSUjnfSQnWwO7mX2d7gditMhCK9W4FjENXAyogeHxyC4I5HmHDk4HQhbBeXOAuMZcJqBu6lmIEjCTZnaF5GjWzgL+Y0OwXpyiqmSxtljcHMeA5jhs5hFwR4WKqu9ERAREQEREBERAREQEREBERAREQEREGs4mxdtHSzVLtRCxz7d7vsj1cQ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">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold; font-size: 14px">
+                        abcde
+                    </div>
+                    <div style="color:gray; font-size: 14px">
+                        추천 사유가 여기 들어감
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="#" style= "font-size: 14px;font-weight: bold;text-decoration: none">팔로우</a>
+            </div>
+        </div>
+        <div style="display: flex;flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display: flex; flex-direction: row">
+                <div class="box" style="width: 35px; height: 35px">
+                    <img class="profile"
+                         src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUSEhAVFhUTGRcVFxcVFhYXFhgSGBIYGRkZFhUaHSggGBolGxUYITEiJSkrLi4uFyEzODMtNygtLisBCgoKDQ0OGw8QGjMhHyErNzAtLTc3NzcrLSs3NysyLTctLS8uLTA3LjAsLjcwKy0tMi0tMy4rNy0tKysrKy01LP/AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABgcEBQEDCAL/xABJEAABAwIEAgcDBwgGCwAAAAABAAIDBBEFEiExBkEHEyJRYXGBMpGhCBQjM0KxwRUWUlRiktHhNUNTctLwRFVjgoOjsrTCw/H/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAnEQEAAgIBAwQBBQEAAAAAAAAAAQIDERIEITETQWFxIyIyUYHBBf/aAAwDAQACEQMRAD8AvFERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQERariDiKloojLUzNY0W8XEm9g1o1N7H3INqiqDEenujb9TSTvIP9ZkjFu8Wc4/BdmGdOEEjCZKKZrgOzlcx7S62xJsQL87FBbaKmpumqS5yULbW0zSEm9xvZu1rrRVnTfXtme5tLF1JtlY7MXAC1/pBa97HlpfwQegkVScO9OdLK9rKqB9OXG2cESRt10znRwG2tj6BWpSVccrGyRPa9jwC1zSC0g7EEboO9ERAREQEREBERAREQEREBERAREQEREBERARFV/Sv0m/MD81pmB1Q5ty4+zEHXtp9p/MDYIOrpC6YIqN5p6MNnmaSHuP1TCBtce28G2g0Go30VGztmqJHTVMrnvebkucS438eQ8F8UNHl7TtSfh/NZqDqipmN2aPv+9dqIoguVwiI6padjvab68/et9wXxlU4TKMrnSUjnfSQnWwO7mX2d7gditMhCK9W4FjENXAyogeHxyC4I5HmHDk4HQhbBeXOAuMZcJqBu6lmIEjCTZnaF5GjWzgL+Y0OwXpyiqmSxtljcHMeA5jhs5hFwR4WKqu9ERAREQEREBERAREQEREBERAREQEREGs4mxdtHSzVLtRCxz7d7vsj1cQ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">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold; font-size: 14px">
+                        abcde
+                    </div>
+                    <div style="color:gray; font-size: 14px">
+                        추천 사유가 여기 들어감
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="#" style= "font-size: 14px;font-weight: bold;text-decoration: none">팔로우</a>
+            </div>
+        </div>
+        <div style="display: flex;flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display: flex; flex-direction: row">
+                <div class="box" style="width: 35px; height: 35px">
+                    <img class="profile"
+                         src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUSEhAVFhUTGRcVFxcVFhYXFhgSGBIYGRkZFhUaHSggGBolGxUYITEiJSkrLi4uFyEzODMtNygtLisBCgoKDQ0OGw8QGjMhHyErNzAtLTc3NzcrLSs3NysyLTctLS8uLTA3LjAsLjcwKy0tMi0tMy4rNy0tKysrKy01LP/AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABgcEBQEDCAL/xABJEAABAwIEAgcDBwgGCwAAAAABAAIDBBEFEiExBkEHEyJRYXGBMpGhCBQjM0KxwRUWUlRiktHhNUNTctLwRFVjgoOjsrTCw/H/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAnEQEAAgIBAwQBBQEAAAAAAAAAAQIDERIEITETQWFxIyIyUYHBBf/aAAwDAQACEQMRAD8AvFERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQERariDiKloojLUzNY0W8XEm9g1o1N7H3INqiqDEenujb9TSTvIP9ZkjFu8Wc4/BdmGdOEEjCZKKZrgOzlcx7S62xJsQL87FBbaKmpumqS5yULbW0zSEm9xvZu1rrRVnTfXtme5tLF1JtlY7MXAC1/pBa97HlpfwQegkVScO9OdLK9rKqB9OXG2cESRt10znRwG2tj6BWpSVccrGyRPa9jwC1zSC0g7EEboO9ERAREQEREBERAREQEREBERAREQEREBERARFV/Sv0m/MD81pmB1Q5ty4+zEHXtp9p/MDYIOrpC6YIqN5p6MNnmaSHuP1TCBtce28G2g0Go30VGztmqJHTVMrnvebkucS438eQ8F8UNHl7TtSfh/NZqDqipmN2aPv+9dqIoguVwiI6padjvab68/et9wXxlU4TKMrnSUjnfSQnWwO7mX2d7gditMhCK9W4FjENXAyogeHxyC4I5HmHDk4HQhbBeXOAuMZcJqBu6lmIEjCTZnaF5GjWzgL+Y0OwXpyiqmSxtljcHMeA5jhs5hFwR4WKqu9ERAREQEREBERAREQEREBERAREQEREGs4mxdtHSzVLtRCxz7d7vsj1cQ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">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold; font-size: 14px">
+                        abcde
+                    </div>
+                    <div style="color:gray; font-size: 14px">
+                        추천 사유가 여기 들어감
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="#" style= "font-size: 14px;font-weight: bold;text-decoration: none">팔로우</a>
+            </div>
+        </div>
+        <div style="display: flex;flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display: flex; flex-direction: row">
+                <div class="box" style="width: 35px; height: 35px">
+                    <img class="profile"
+                         src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUSEhAVFhUTGRcVFxcVFhYXFhgSGBIYGRkZFhUaHSggGBolGxUYITEiJSkrLi4uFyEzODMtNygtLisBCgoKDQ0OGw8QGjMhHyErNzAtLTc3NzcrLSs3NysyLTctLS8uLTA3LjAsLjcwKy0tMi0tMy4rNy0tKysrKy01LP/AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABgcEBQEDCAL/xABJEAABAwIEAgcDBwgGCwAAAAABAAIDBBEFEiExBkEHEyJRYXGBMpGhCBQjM0KxwRUWUlRiktHhNUNTctLwRFVjgoOjsrTCw/H/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAnEQEAAgIBAwQBBQEAAAAAAAAAAQIDERIEITETQWFxIyIyUYHBBf/aAAwDAQACEQMRAD8AvFERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQERariDiKloojLUzNY0W8XEm9g1o1N7H3INqiqDEenujb9TSTvIP9ZkjFu8Wc4/BdmGdOEEjCZKKZrgOzlcx7S62xJsQL87FBbaKmpumqS5yULbW0zSEm9xvZu1rrRVnTfXtme5tLF1JtlY7MXAC1/pBa97HlpfwQegkVScO9OdLK9rKqB9OXG2cESRt10znRwG2tj6BWpSVccrGyRPa9jwC1zSC0g7EEboO9ERAREQEREBERAREQEREBERAREQEREBERARFV/Sv0m/MD81pmB1Q5ty4+zEHXtp9p/MDYIOrpC6YIqN5p6MNnmaSHuP1TCBtce28G2g0Go30VGztmqJHTVMrnvebkucS438eQ8F8UNHl7TtSfh/NZqDqipmN2aPv+9dqIoguVwiI6padjvab68/et9wXxlU4TKMrnSUjnfSQnWwO7mX2d7gditMhCK9W4FjENXAyogeHxyC4I5HmHDk4HQhbBeXOAuMZcJqBu6lmIEjCTZnaF5GjWzgL+Y0OwXpyiqmSxtljcHMeA5jhs5hFwR4WKqu9ERAREQEREBERAREQEREBERAREQEREGs4mxdtHSzVLtRCxz7d7vsj1cQ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">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold; font-size: 14px">
+                        abcde
+                    </div>
+                    <div style="color:gray; font-size: 14px">
+                        추천 사유가 여기 들어감
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="#" style= "font-size: 14px;font-weight: bold;text-decoration: none">팔로우</a>
+            </div>
+        </div>
+        <div style="display: flex;flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display: flex; flex-direction: row">
+                <div class="box" style="width: 35px; height: 35px">
+                    <img class="profile"
+                         src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUSEhAVFhUTGRcVFxcVFhYXFhgSGBIYGRkZFhUaHSggGBolGxUYITEiJSkrLi4uFyEzODMtNygtLisBCgoKDQ0OGw8QGjMhHyErNzAtLTc3NzcrLSs3NysyLTctLS8uLTA3LjAsLjcwKy0tMi0tMy4rNy0tKysrKy01LP/AABEIAOEA4QMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABgcEBQEDCAL/xABJEAABAwIEAgcDBwgGCwAAAAABAAIDBBEFEiExBkEHEyJRYXGBMpGhCBQjM0KxwRUWUlRiktHhNUNTctLwRFVjgoOjsrTCw/H/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAnEQEAAgIBAwQBBQEAAAAAAAAAAQIDERIEITETQWFxIyIyUYHBBf/aAAwDAQACEQMRAD8AvFERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQERariDiKloojLUzNY0W8XEm9g1o1N7H3INqiqDEenujb9TSTvIP9ZkjFu8Wc4/BdmGdOEEjCZKKZrgOzlcx7S62xJsQL87FBbaKmpumqS5yULbW0zSEm9xvZu1rrRVnTfXtme5tLF1JtlY7MXAC1/pBa97HlpfwQegkVScO9OdLK9rKqB9OXG2cESRt10znRwG2tj6BWpSVccrGyRPa9jwC1zSC0g7EEboO9ERAREQEREBERAREQEREBERAREQEREBERARFV/Sv0m/MD81pmB1Q5ty4+zEHXtp9p/MDYIOrpC6YIqN5p6MNnmaSHuP1TCBtce28G2g0Go30VGztmqJHTVMrnvebkucS438eQ8F8UNHl7TtSfh/NZqDqipmN2aPv+9dqIoguVwiI6padjvab68/et9wXxlU4TKMrnSUjnfSQnWwO7mX2d7gditMhCK9W4FjENXAyogeHxyC4I5HmHDk4HQhbBeXOAuMZcJqBu6lmIEjCTZnaF5GjWzgL+Y0OwXpyiqmSxtljcHMeA5jhs5hFwR4WKqu9ERAREQEREBERAREQEREBERAREQEREGs4mxdtHSzVLtRCxz7d7vsj1cQ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">
+                </div>
+                <div style="margin-right: 10px; text-align: left">
+                    <div style="font-weight: bold; font-size: 14px">
+                        abcde
+                    </div>
+                    <div style="color:gray; font-size: 14px">
+                        추천 사유가 여기 들어감
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="#" style= "font-size: 14px;font-weight: bold;text-decoration: none">팔로우</a>
+            </div>
+        </div>
+        <div style="margin-top: 40px; font-size: 12px;color: gray; text-align: left"> 소개 도움말 홍보센터 API<br>소개 도움말 홍보센터 API</div>
+        <div style="margin-top: 20px; font-size: 12px;color: gray; text-align: left"> 2024 인스타그램 프롬 페이스북</div>
+    </div>
+</div>
+
+<!-- 첫번 째 모달 -->
+<div id="first_modal" class="modal_overlay">
+    <div class="modal_window">
+        <div style="border-bottom:solid 1px gray;display: flex; flex-direction: row; justify-content: space-between;">
+            <div style="width: 40px; background: gray">
+
+            </div>
+            <div>
+                새 이미지 업로드
+            </div>
+            <div style="width: 40px; background: gray">
+                <span class="modal_close material-icons-outlined">close</span>
+            </div>
+        </div>
+
+        <div class="img_upload_space" style=" width: 778px; height:540px;margin-top: 10px; ">
+
+        </div>
+    </div>
+</div>
+
+<!-- 두번 째 모달 -->
+<div id="second_modal" class="modal_overlay">
+    <div class="modal_window">
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <div style="width: 40px; background: gray">
+
+            </div>
+            <div>
+                새 이미지 업로드
+            </div>
+            <div style="width: 40px; background: gray">
+                <span class="modal_close material-icons-outlined">close</span>
+            </div>
+        </div>
+            <div style="border-top: solid 1px gray; display: flex ;flex-direction: row;margin-top: 10px; ">
+                <div class="img_upload_space" style="width: 500px; height:540px;">
+
+                </div>
+                <div style="border-left: solid 1px gray">
+                    <div>
+                        <textarea id="input_feed_content" class="form-control" style="width: 276px; height: 400px" id="exampleFormControlTextArea1" rows="5"></textarea>
+                    </div>    
+                    <button id="feed_create_button" type="button" class="btn btn-primary" style="width: 100%;">
+                        공유하기
+                    </button>
+                </div>
+                
+            </div>
+    </div>
+</div>
+
+
+<!-- Optional JavaScript; choose one of the two! -->
+<script>
+
+    $('.bookmark').click(function (e){
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let bookmark_id = e.target.id;
+        let bookmark_text = $.trim($('#'+bookmark_id).html());
+        if(bookmark_text == 'bookmark'){
+            $('#'+bookmark_id).html('bookmark_border');
+        }else{
+            $('#'+bookmark_id).html('bookmark');
+        }
+
+        $.ajax({
+            url: "/content/bookmark",
+            data: {
+                feed_id: feed_id,
+                bookmark_text: bookmark_text,
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+            }
+        });
+
+    });
+
+    $('.favorite').click(function (e){
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let favorite_id = e.target.id;
+        console.log(favorite_id);
+        let favorite_text = $.trim($('#'+favorite_id).html());
+        console.log(favorite_text);
+        if(favorite_text == 'favorite'){
+            $('#'+favorite_id).html('favorite_border');
+        }else{
+            $('#'+favorite_id).html('favorite');
+        }
+
+        $.ajax({
+            url: "/content/like",
+            data: {
+                feed_id: feed_id,
+                favorite_text: favorite_text,
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+            }
+        });
+
+    });
+
+
+
+    $('.upload_reply').click(function (e){ <!--e는 어떤 이벤트 콘솔로그로 이벤트를 찍어보면은 클릭했다는 내용이랑 내가 클릭했을 떄 뭘 했고 클릭한게 무엇인지 여러가지 정보들이 담겨있다.10시간 4분쯤-->
+        <!--게시 누르면 feed_id 가져오고  그 다음에 reply_id 만들어주고 그거 이용해서 reply_id 값 있는 input 내용 가져오게-->
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let reply_id = 'reply_' +  feed_id;
+        let reply_content = $('#'+reply_id).val();
+        <!--아무것도 없으면 에러를 내야하니까 if문 이용 예외처리-->
+
+        if(reply_content.length <= 0) {
+            alert('댓글을 입력하세요');
+            return 0;
+        }
+
+        $.ajax({
+            url: "/content/reply",
+            data: {
+                feed_id : feed_id,
+                reply_content : reply_content,
+                <!--사용자 아이디는 views에서 세션으로 가져오니까-->
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+                alert('댓글 성공')
+                $('#reply_list_' + feed_id).append("<div style='margin:0 20px;text-align: left; font-size: 14px'><b>{{ user.nickname }}</b>" + reply_content + '</div>')
+                location.replace('/main')
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+                $('#'+reply_id).val(''); //댓글 내용이 남아있어서 댓글 내용 초기화
+            }
+        });
+    })
+
+
+    let files
+
+    $(".modal_close").click(function () {
+        $('#first_modal').css({
+            display: 'none'
+        });
+        $('#second_modal').css({
+            display: 'none'
+        });
+    });
+    
+
+    
+    $('#nav_bar_add_box').click(function () {
+        $('#first_modal').css({
+            display: 'flex'
+        });
+
+
+        $(document.body).css({ // 스크롤 없애는 기능
+            overflow: 'hidden'
+        });
+    });
+
+    <!-- 드래그 앤 드롭 기능 -->
+    $('.img_upload_space')
+        .on("dragover", dragOver)
+        .on("dragleave", dragOver)
+        .on("drop", uploadFiles);
+
+    function dragOver(e) { <!--강의 4시간 36분에 설명 나와있는거 -->
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (e.type == "dragover") {
+            $(e.target).css({
+                "background-color": "black",
+                "outline-offset": "-20px",
+            });
+        } else {
+            $(e.target).css({
+                "outline-offset": "-10px",
+            });
+        }
+    }
+
+    function uploadFiles(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        e.dataTransfer = e.originalEvent.dataTransfer; //2
+        files = e.target.files || e.dataTransfer.files;
+
+        if (files.length > 1) {
+            alert('하나만 올려라.');
+            return;
+        }
+
+        if (files[0].type.match(/image.*/)) {
+
+            $('#first_modal').css({
+                display: 'none'
+            });
+            $('#second_modal').css({
+                display: 'flex'
+            });
+            
+            $('#feed_create_button').click(function (){
+                alert('공유하기 눌렀다')
+                
+                let file = files[0];
+                let image =files[0].name;
+                let content = $('#input_feed_content').val();
+
+                let fd = new FormData();
+
+                fd.append('file',file);
+                fd.append('image',image);
+                fd.append('content',content);
+                
+                $.ajax({
+                    url:"/content/upload",
+                    data:fd,
+                    method:"POST",
+                    processData: false,
+                    contentType: false,
+                    success: function (data){
+                        console.log("성공");
+                    },
+                    error: function (request, status, error) {
+                        console.log("에러");
+                    },
+                    complle : function (){
+                        console.log("완료");
+                        location.replace("/main")
+                    }
+                });
+            });
+            
+            $('.img_upload_space').css({
+                "background-image": "url(" + window.URL.createObjectURL(files[0]) + ")",
+                "outline": "none",
+                "background-size": "100%",
+                "background-repeat": "no-repeat",
+                "background-position": "center",
+            });
+        } else {
+            alert('이미지가 아닙니다.');
+            return;
+        }
+    }
+</script>
+
+
+<!-- Option 1: Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+<!-- Option 2: Separate Popper and Bootstrap JS -->
+<!--
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+-->
+</body>
+
+
+
+
+
+
+
+
+
+
+</html>
